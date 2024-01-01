@@ -7,6 +7,7 @@ import com.gamedoora.model.dto.SkillsDTO;
 import com.gamedoora.model.dto.UserDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.CamelContext;
+import org.apache.camel.CamelExecutionException;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.support.DefaultExchange;
@@ -26,15 +27,19 @@ public class UserDataAggregatorAssembler {
     private UserProfileRoute userProfileRoute;
     public GdUser getUserByEmail(String email){
 
-        UserDTO userDTO = getProducerTemplate().requestBody("direct:userQuery", email, UserDTO.class);
-        List<RoleDTO> roleDTOList = getProducerTemplate().requestBody("direct:userRoleQuery", email, ArrayList.class);
-        List<SkillsDTO> skillsDTOList = getProducerTemplate().requestBody("direct:userSkillsQuery", email, ArrayList.class);
-        return GdUser
-                .builder()
-                .skills(skillsDTOList)
-                .user(userDTO)
-                .roles(roleDTOList)
-                .build();
+        try {
+            UserDTO userDTO = getProducerTemplate().requestBody("direct:userQuery", email, UserDTO.class);
+            List<RoleDTO> roleDTOList = getProducerTemplate().requestBody("direct:userRoleQuery", email, ArrayList.class);
+            List<SkillsDTO> skillsDTOList = getProducerTemplate().requestBody("direct:userSkillsQuery", email, ArrayList.class);
+            return GdUser
+                    .builder()
+                    .skills(skillsDTOList)
+                    .user(userDTO)
+                    .roles(roleDTOList)
+                    .build();
+        } catch (CamelExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public ProducerTemplate getProducerTemplate() {

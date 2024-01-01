@@ -1,5 +1,7 @@
 package com.gamedoora.backend.proxy.aggregation.exceptions;
 
+import org.apache.camel.CamelException;
+import org.apache.camel.CamelExecutionException;
 import org.hibernate.MappingException;
 import org.hibernate.QueryTimeoutException;
 import org.hibernate.exception.DataException;
@@ -14,20 +16,26 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import javax.lang.model.UnknownEntityException;
 import java.net.ConnectException;
-
+import  feign.FeignException;
+import feign.RetryableException;
 /**
  * @author aprajshekhar
  */
 @ControllerAdvice
 public class AggregationProxyExceptionHandler extends ResponseEntityExceptionHandler {
 
-  @ExceptionHandler(value = {feign,.class})
-  protected ResponseEntity<Object> handleNotFound(ConnectException ex, WebRequest request) {
+  @ExceptionHandler(value = {RetryableException.class})
+  protected ResponseEntity<Object> handleConnectException(ConnectException ex, WebRequest request) {
     AggregationProxyExceptionResponseEntity bodyOfResponse = getBodyOfResponse(ex, HttpStatus.SERVICE_UNAVAILABLE);
     return handleExceptionInternal(
         ex, bodyOfResponse, new HttpHeaders(), HttpStatus.SERVICE_UNAVAILABLE, request);
   }
-
+  @ExceptionHandler(value = {CamelExecutionException.class})
+  protected ResponseEntity<Object> handleCamelException(CamelExecutionException ex, WebRequest request) {
+    AggregationProxyExceptionResponseEntity bodyOfResponse = getBodyOfResponse(ex, HttpStatus.SERVICE_UNAVAILABLE);
+    return handleExceptionInternal(
+            ex, bodyOfResponse, new HttpHeaders(), HttpStatus.SERVICE_UNAVAILABLE, request);
+  }
 
   private  AggregationProxyExceptionResponseEntity getBodyOfResponse(Exception ex, HttpStatus httpStatus) {
     return AggregationProxyExceptionResponseEntity.builder()
